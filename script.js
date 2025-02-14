@@ -1,6 +1,5 @@
 let speech = new SpeechSynthesisUtterance();
 let voices = [];
-
 let voicesSelect = document.querySelector("select");
 
 // Function to load voices properly
@@ -8,38 +7,32 @@ function loadVoices() {
     voices = window.speechSynthesis.getVoices();
     
     if (voices.length === 0) {
-        setTimeout(loadVoices, 100);
+        setTimeout(loadVoices, 100); // Retry if voices are not loaded
         return;
     }
 
-    speech.voice = voices[0]; 
-    voicesSelect.innerHTML = ""; 
-
+    voicesSelect.innerHTML = ""; // Clear old options
     voices.forEach((voice, i) => {
-        let option = new Option(voice.name, i);
-        voicesSelect.add(option);
+        let option = document.createElement("option");
+        option.value = i;
+        option.textContent = voice.name;
+        voicesSelect.appendChild(option);
     });
+
+    speech.voice = voices[0]; // Set default voice
 }
 
-// Ensure voices are loaded
-if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = loadVoices;
-}
+// Ensure voices are loaded correctly
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices(); // Call manually in case `onvoiceschanged` doesn't fire
 
-// Also call loadVoices in case onvoiceschanged doesn't fire
-loadVoices();
-
-// Change voice when the user selects a different option
+// Change voice when a new one is selected
 voicesSelect.addEventListener("change", () => {
     speech.voice = voices[voicesSelect.value];
 });
 
-// Speak the text on button click
+// Speak the text
 document.querySelector("button").addEventListener("click", () => {
     speech.text = document.querySelector("textarea").value;
-    
-    if (speech.text.trim() !== "") {
-        window.speechSynthesis.cancel(); 
-        window.speechSynthesis.speak(speech);
-    }
+    window.speechSynthesis.speak(speech);
 });
