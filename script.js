@@ -2,29 +2,45 @@ let speech = new SpeechSynthesisUtterance();
 let voices = [];
 let voicesSelect = document.querySelector("select");
 
-// Function to load voices properly
+// Function to prioritize the main voice (Google Translate/Siri)
+function getPreferredVoice(voices) {
+    let preferredLangs = ["en-CA", "fr-CA", "en-US", "fr-FR", "es-ES", "en-GB"];
+    
+    for (let lang of preferredLangs) {
+        let match = voices.find(voice => voice.lang.startsWith(lang) && voice.default);
+        if (match) return match;
+    }
+
+    return voices.find(voice => voice.default) || voices[0]; // Fallback if no perfect match
+}
+
+// Load voices properly
 function loadVoices() {
     voices = window.speechSynthesis.getVoices();
-    
+
     if (voices.length === 0) {
-        setTimeout(loadVoices, 100); // Retry if voices are not loaded
+        setTimeout(loadVoices, 100);
         return;
     }
 
     voicesSelect.innerHTML = ""; // Clear old options
+
     voices.forEach((voice, i) => {
         let option = document.createElement("option");
         option.value = i;
-        option.textContent = voice.name;
+        option.textContent = `${voice.name} (${voice.lang})`;
         voicesSelect.appendChild(option);
     });
 
-    speech.voice = voices[0]; // Set default voice
+    // Set preferred voice (Google Translate/Siri-like)
+    let preferredVoice = getPreferredVoice(voices);
+    speech.voice = preferredVoice;
+    voicesSelect.value = voices.indexOf(preferredVoice);
 }
 
 // Ensure voices are loaded correctly
 window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices(); // Call manually in case `onvoiceschanged` doesn't fire
+loadVoices();
 
 // Change voice when a new one is selected
 voicesSelect.addEventListener("change", () => {
